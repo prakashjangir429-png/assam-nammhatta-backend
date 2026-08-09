@@ -93,7 +93,7 @@ const processWhatsAppReceipts = async () => {
             $or: [
                 {
                     whatsappAttempts: {
-                        $lt: 4,
+                        $lt: 10,
                     },
                 },
                 {
