@@ -5,11 +5,5 @@
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/send-whatsapp.js",
-      "schedule": "0 */2 * * *"
-    }
   ]
 }
