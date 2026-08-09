@@ -166,11 +166,11 @@ export const registerDevotee = async (req, res) => {
       paymentVerified: true,
     });
 
-    // try {
-    //   await sendWhatsAppReceipt({ phone: devotee.phone, message: registrationReceipt(devotee) });
-    // } catch (whatsappError) {
-    //   console.error("Registration WhatsApp error:", whatsappError.message);
-    // }
+    try {
+      await sendWhatsAppReceipt({ phone: devotee.phone, message: registrationReceipt(devotee) });
+    } catch (whatsappError) {
+      console.error("Registration WhatsApp error:", whatsappError.message);
+    }
 
     return res.status(201).json({ success: true, data: devotee, message: "Registration successful" });
   } catch (error) {
