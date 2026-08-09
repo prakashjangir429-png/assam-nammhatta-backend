@@ -112,7 +112,7 @@ export const processWhatsAppReceipts = async () => {
             ],
         })
             .sort({ createdAt: 1 })
-            .limit(10);
+            .limit(20);
 
         if (!devotees.length) {
             console.log("No pending WhatsApp receipts.");
