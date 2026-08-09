@@ -64,7 +64,7 @@ Hare Krishna`;
 
 let isRunning = false;
 
-const processWhatsAppReceipts = async () => {
+export const processWhatsAppReceipts = async () => {
     if (isRunning) {
         console.log("WhatsApp cron is already running...");
         return;
@@ -79,27 +79,35 @@ const processWhatsAppReceipts = async () => {
             paymentStatus: "verified",
             paymentVerified: true,
 
-            $or: [
+            $and: [
                 {
-                    whatsappStatus: {
-                        $in: ["pending", "failed"],
-                    },
+                    $or: [
+                        {
+                            whatsappStatus: {
+                                $in: ["pending", "failed"],
+                            },
+                        },
+                        {
+                            whatsappStatus: {
+                                $exists: false,
+                            },
+                        },
+                    ],
                 },
-                {
-                    whatsappStatus: { $exists: false },
-                },
-            ],
 
-            $or: [
                 {
-                    whatsappAttempts: {
-                        $lt: 10,
-                    },
-                },
-                {
-                    whatsappAttempts: {
-                        $exists: false,
-                    },
+                    $or: [
+                        {
+                            whatsappAttempts: {
+                                $lt: 10,
+                            },
+                        },
+                        {
+                            whatsappAttempts: {
+                                $exists: false,
+                            },
+                        },
+                    ],
                 },
             ],
         })
@@ -164,6 +172,6 @@ const processWhatsAppReceipts = async () => {
 };
 
 // Every 2 minutes
-cron.schedule("*/2 * * * *", processWhatsAppReceipts);
+// cron.schedule("*/2 * * * *", processWhatsAppReceipts);
 
 console.log("WhatsApp receipt cron started - runs every 2 minutes");

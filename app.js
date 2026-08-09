@@ -3,7 +3,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import donationRoutes from "./routes/donationRoutes.js";
 import devoteeRoutes from "./routes/devoteeRoutes.js";
-import "./utils/whatsappCron.js";
+// import "./utils/whatsappCron.js";
 
 const app = express();
 
