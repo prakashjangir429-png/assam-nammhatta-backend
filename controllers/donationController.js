@@ -28,7 +28,7 @@ export const createDonationOrder = async (req, res) => {
   }
 };
 
-const donationReceipt = (donation) => `🙏 HARE KRISHNA
+export const donationReceipt = (donation) => `🙏 HARE KRISHNA
 
 ASSAM NAMHATTA SANGHA
 
@@ -114,11 +114,75 @@ export const createDonation = async (req, res) => {
 
 export const getDonations = async (req, res) => {
   try {
-    const donations = await Donation.find().sort({ createdAt: -1 });
-    return res.json({ success: true, data: donations });
+    const {
+      search = "",
+      fromDate,
+      toDate,
+      page = 1,
+      limit = 100,
+    } = req.query;
+
+    const query = {};
+
+    // 🔎 Search filter
+    if (search.trim()) {
+      query.$or = [
+        { name: { $regex: search.trim(), $options: "i" } },
+        { email: { $regex: search.trim(), $options: "i" } },
+        { phone: { $regex: search.trim(), $options: "i" } },
+      ];
+    }
+
+    // 📅 Date filter
+    if (fromDate || toDate) {
+      query.createdAt = {};
+
+      if (fromDate) {
+        const startDate = new Date(fromDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        query.createdAt.$gte = startDate;
+      }
+
+      if (toDate) {
+        const endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+
+        query.createdAt.$lte = endDate;
+      }
+    }
+
+    // Pagination
+    const pageNumber = Math.max(Number(page), 1);
+    const limitNumber = Math.max(Number(limit), 1);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const [donations, total] = await Promise.all([
+      Donation.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber),
+
+      Donation.countDocuments(query),
+    ]);
+
+    return res.json({
+      success: true,
+      data: donations,
+      pagination: {
+        total,
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages: Math.ceil(total / limitNumber),
+      },
+    });
   } catch (error) {
     console.error("Get donations error:", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch donations" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch donations",
+    });
   }
 };
 
