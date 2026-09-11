@@ -2,6 +2,9 @@ import nodemailer from "nodemailer";
 import Donation from "../models/Donation.js";
 import { sendWhatsAppReceipt } from "../utils/whatsapp.js";
 import Devotee from "../models/Devotee.js";
+import { donationReceipt } from "./donationController.js";
+import { registrationReceipt } from "./devoteeController.js";
+import {sendRegistrationEmail} from "../utils/sendMail.js";
 
 const donationEmailHtml = (donation) => {
     const transactionId =

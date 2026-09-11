@@ -9,6 +9,10 @@ import {
   deleteDevotee,
 } from "../controllers/devoteeController.js";
 
+import {
+  resendDevoteeConfirmation
+} from "../controllers/ResendController.js";
+
 const router = Router();
 
 router.post("/create-order", createDevoteeOrder);
@@ -18,5 +22,6 @@ router.get("/", protect, getDevotees);
 router.get("/:id", protect, getDevoteeById);
 router.put("/:id", protect, updateDevotee);
 router.delete("/:id", protect, deleteDevotee);
+router.post("/:id", protect, resendDevoteeConfirmation);
 
 export default router;

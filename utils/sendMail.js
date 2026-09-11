@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { transporter } from "../controllers/ResendController.js";
 
 
 const escapeHtml = (value = "") =>

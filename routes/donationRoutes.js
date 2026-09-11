@@ -10,6 +10,10 @@ import {
   deleteDonation,
 } from "../controllers/donationController.js";
 
+import {
+  resendDonationConfirmation
+} from "../controllers/ResendController.js";
+
 const router = Router();
 
 router.post("/create-order", createDonationOrder);
@@ -20,5 +24,6 @@ router.get("/:id", protect, getDonationById);
 router.put("/:id", protect, updateDonation);
 router.patch("/verify/:id", protect, verifyDonation);
 router.delete("/:id", protect, deleteDonation);
+router.post("/:id", protect, resendDonationConfirmation);
 
 export default router;
