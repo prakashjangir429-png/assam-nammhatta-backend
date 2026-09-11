@@ -22,6 +22,6 @@ router.get("/", protect, getDevotees);
 router.get("/:id", protect, getDevoteeById);
 router.put("/:id", protect, updateDevotee);
 router.delete("/:id", protect, deleteDevotee);
-router.post("/:id", protect, resendDevoteeConfirmation);
+router.post("/resend/:id", protect, resendDevoteeConfirmation);
 
 export default router;

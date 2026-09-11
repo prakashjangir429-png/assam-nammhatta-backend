@@ -24,6 +24,6 @@ router.get("/:id", protect, getDonationById);
 router.put("/:id", protect, updateDonation);
 router.patch("/verify/:id", protect, verifyDonation);
 router.delete("/:id", protect, deleteDonation);
-router.post("/:id", protect, resendDonationConfirmation);
+router.post("/resend/:id", protect, resendDonationConfirmation);
 
 export default router;
