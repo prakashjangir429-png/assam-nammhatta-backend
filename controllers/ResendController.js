@@ -421,8 +421,8 @@ const donationEmailHtml = (donation) => {
 export const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASSWORD,
+        user: "assamnamhatta26@gmail.com",
+        pass: "qpyi sqda gloc hzix",
     },
 });
 
