@@ -20,19 +20,19 @@ export const createDevoteeOrder = async (req, res) => {
 const normalizeFamilyMembers = (members = []) =>
   Array.isArray(members)
     ? members.map((m) => ({
-        name: String(m.name || "").trim(),
-        age: m.age === "" || m.age == null ? null : Number(m.age),
-        gender: String(m.gender || "").trim(),
-        phone: String(m.phone || "").trim(),
-        address: String(m.address || "").trim(),
-      }))
+      name: String(m.name || "").trim(),
+      age: m.age === "" || m.age == null ? null : Number(m.age),
+      gender: String(m.gender || "").trim(),
+      phone: String(m.phone || "").trim(),
+      address: String(m.address || "").trim(),
+    }))
     : [];
 
 export const registrationReceipt = (devotee) => {
   const family = devotee.familyMembers?.length
     ? devotee.familyMembers
-        .map((m, i) => `${i + 1}. ${m.name}\nAge : ${m.age ?? "-"}\nGender : ${m.gender}\nPhone : ${m.phone}\nAddress : ${m.address}`)
-        .join("\n")
+      .map((m, i) => `${i + 1}. ${m.name}\nAge : ${m.age ?? "-"}\nGender : ${m.gender}\nPhone : ${m.phone}\nAddress : ${m.address}`)
+      .join("\n")
     : "No Family Members";
 
   return `🙏 HARE KRISHNA
@@ -224,24 +224,100 @@ export const getDevotees = async (req, res) => {
     const limitNumber = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const [devotees, total] = await Promise.all([
+    // Fetch paginated data + total statistics
+    const [devotees, total, stats] = await Promise.all([
+      // Paginated records
       Devotee.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber),
 
+      // Total matching registrations
       Devotee.countDocuments(query),
+
+      // Statistics for ALL matching records
+      Devotee.aggregate([
+        {
+          $match: query,
+        },
+        {
+          $group: {
+            _id: null,
+
+            // Total registrations
+            totalRegistrations: {
+              $sum: 1,
+            },
+
+            // Total volunteers
+            totalVolunteers: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$sevaInterest", "Volunteer"] },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            // Total accommodation
+            totalAccommodation: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$accommodation", true] },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            // Total amount
+            totalAmount: {
+              $sum: {
+                $convert: {
+                  input: "$paymentAmount",
+                  to: "double",
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            totalRegistrations: 1,
+            totalVolunteers: 1,
+            totalAccommodation: 1,
+            totalAmount: {
+              $round: ["$totalAmount", 2],
+            },
+          },
+        },
+      ]),
     ]);
+
+    const statistics = stats[0] || {
+      totalRegistrations: 0,
+      totalVolunteers: 0,
+      totalAccommodation: 0,
+      totalAmount: 0,
+    };
 
     return res.json({
       success: true,
+
       data: devotees,
+
       pagination: {
         total,
         page: pageNumber,
         limit: limitNumber,
         totalPages: Math.ceil(total / limitNumber),
       },
+
+      statistics,
     });
   } catch (error) {
     console.error("Get devotees error:", error);

@@ -130,6 +130,7 @@ export const getDonations = async (req, res) => {
         { name: { $regex: search.trim(), $options: "i" } },
         { email: { $regex: search.trim(), $options: "i" } },
         { phone: { $regex: search.trim(), $options: "i" } },
+        { transactionId: { $regex: search.trim(), $options: "i" } },
       ];
     }
 
@@ -157,24 +158,150 @@ export const getDonations = async (req, res) => {
     const limitNumber = Math.max(Number(limit), 1);
     const skip = (pageNumber - 1) * limitNumber;
 
-    const [donations, total] = await Promise.all([
+    const [donations, total, stats] = await Promise.all([
+      // Paginated donations
       Donation.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limitNumber),
 
+      // Total matching donations
       Donation.countDocuments(query),
+
+      // Overall statistics
+      Donation.aggregate([
+        {
+          $match: query,
+        },
+
+        {
+          $group: {
+            _id: null,
+
+            // Total donation records
+            totalDonations: {
+              $sum: 1,
+            },
+
+            // Total amount
+            totalCollection: {
+              $sum: {
+                $convert: {
+                  input: "$amount",
+                  to: "double",
+                  onError: 0,
+                  onNull: 0,
+                },
+              },
+            },
+
+            // Verified amount
+            verifiedCollection: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$paymentVerified", true] },
+                  {
+                    $convert: {
+                      input: "$amount",
+                      to: "double",
+                      onError: 0,
+                      onNull: 0,
+                    },
+                  },
+                  0,
+                ],
+              },
+            },
+
+            // Pending amount
+            pendingCollection: {
+              $sum: {
+                $cond: [
+                  { $ne: ["$paymentVerified", true] },
+                  {
+                    $convert: {
+                      input: "$amount",
+                      to: "double",
+                      onError: 0,
+                      onNull: 0,
+                    },
+                  },
+                  0,
+                ],
+              },
+            },
+
+            // Verified payment count
+            verifiedPayments: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$paymentVerified", true] },
+                  1,
+                  0,
+                ],
+              },
+            },
+
+            // Pending payment count
+            pendingPayments: {
+              $sum: {
+                $cond: [
+                  { $ne: ["$paymentVerified", true] },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+
+        {
+          $project: {
+            _id: 0,
+
+            totalDonations: 1,
+
+            totalCollection: {
+              $round: ["$totalCollection", 2],
+            },
+
+            verifiedCollection: {
+              $round: ["$verifiedCollection", 2],
+            },
+
+            pendingCollection: {
+              $round: ["$pendingCollection", 2],
+            },
+
+            verifiedPayments: 1,
+            pendingPayments: 1,
+          },
+        },
+      ]),
     ]);
+
+    const statistics = stats[0] || {
+      totalDonations: 0,
+      totalCollection: 0,
+      verifiedCollection: 0,
+      pendingCollection: 0,
+      verifiedPayments: 0,
+      pendingPayments: 0,
+    };
 
     return res.json({
       success: true,
+
       data: donations,
+
       pagination: {
         total,
         page: pageNumber,
         limit: limitNumber,
         totalPages: Math.ceil(total / limitNumber),
       },
+
+      statistics,
     });
   } catch (error) {
     console.error("Get donations error:", error);
